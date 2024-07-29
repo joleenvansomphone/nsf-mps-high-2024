@@ -1,0 +1,665 @@
+---
+title: "Exercise Week 3: Explatory Data Analysis (EDA)"
+# author: "Tomoki Okuno"
+date: "6/25/2024"
+format:
+  html:
+    theme: cosmo
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    code-fold: false
+engine: knitr
+knitr:
+  opts_chunk: 
+    fig.align: 'center'
+    # fig.width: 6
+    # fig.height: 4
+    message: FALSE
+    cache: false
+---
+
+You can duplicate this .rmd file and answer each question directly in the notebook below each question. Throughout the exercise, do your best to summarize interesting patterns or findings in your answers.
+
+First load necessary libraries. We typically set include=FALSE in a code chunk header to avoid showing that chunk in the output.
+
+{r setup, include=TRUE, warning=FALSE, message=FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(readr)
+library(readxl)
+library(patchwork)
+library(sjPlot)
+library(tidyverse)
+
+Useful shortcuts in RStudio:
+
+Cmd + Option + I inserts an {r} code chunk;
+
+Cmd + I indents code appropriately;
+
+Cmd + Shift + C comments out code;
+
+Cmd + Shift + M inserts the pipe operator |>.
+
+{r}
+# set a consistent theme for ggplot
+set_theme(base = theme_bw(base_size = 11))
+
+Import datasets
+
+What type of information is contained in each dataset?
+
+{r}
+# change to your local file directory
+datasets_folder <- "/Users/joleen/Desktop/R_Projects_Personal/datasets/"
+
+{r, warning=F, message=F}
+accord_key <- read_csv(paste(datasets_folder, "accord_key.csv", sep = "")) |>
+  print(width = Inf)
+
+bloodpressure <- 
+  read_csv(paste(datasets_folder, "bloodpressure.csv", sep = "")) |>
+  print(width = Inf)
+
+hba1c <- read_csv(paste(datasets_folder, "hba1c.csv", sep = "")) |>
+  print(width = Inf)
+
+Clean data
+
+Let's change some variables to make it easier to analyze:
+
+female: Change variable name to gender and recode the variable to Female if gender = 1, and Male if gender = 0.
+
+{r}
+new_accord <- accord_key |> 
+  mutate(
+    female = factor(female,
+                    levels = c("0", "1"),
+                    labels = c("Male", "Female"))
+  ) |> 
+  rename(gender = female)
+
+{r}
+
+## used case_when as opposed to if_else for organization
+
+test_accord <- accord_key |> 
+  rename(gender = female) |> 
+  mutate(
+    gender = case_when(
+      gender == 0 ~ "Male",
+      gender == 1 ~ "Female"
+    )
+    )
+
+raceclass: Move the category Others to the end, which is natural (hint: set the levels of a factor)
+
+{r}
+mod_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("0","1","2","3"),
+                       labels = c("Other","White","Black","Hispanic"))
+  )
+
+Initially thought the levels had to be a number first that corresponds to labels, which resulted in N/A
+
+{r}
+new_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("Other","White","Black","Hispanic"))
+  ) |> 
+  arrange(desc(raceclass))
+                    
+
+Briefly describe the datasets
+
+How many individuals are included in each file?
+
+{r}
+accord_key |> 
+  count(MaskID, sort = TRUE)
+
+{r}
+
+## Making sure that the entries were unique, to avoid repeats 
+accord_key |> 
+  distinct(MaskID) 
+
+
+There are 10,251 individuals in the accord key data set.
+
+{r}
+bloodpressure |> 
+  count(MaskID, sort = TRUE)
+
+{r}
+bloodpressure |> 
+  distinct(MaskID) |> 
+  count(MaskID, sort = TRUE)
+
+{r}
+
+## Used summarize instead of count, but unsure as to why the amount of entries per MaskID is different 
+
+bloodpressure |> 
+  group_by(MaskID) |> 
+  summarize(number = n())
+
+There are 10,249 individuals in the bloodpressure data , as shown by the rows.
+
+{r}
+hba1c |>
+  group_by(MaskID) |> 
+  summarize(n =n())
+
+There are 10,245 individuals recorded in the hba1c data.
+
+Initially thought that the repeat in entries meant that there were repeats, and that I had to run it through distinct. However, each row was a unique MaskID, meaning that I could just use the row count regardless.
+
+What's the percentage of females and of each ethnicity group in accord_key? Describe the results numerically and visually.
+
+GENDER:
+
+{r}
+accord_key |> 
+  group_by(female) |> 
+  summarize(number = n(),
+            percent = number * 100 / 10251 )
+
+{r}
+
+## Tested on modified dataset 
+
+new_accord |> 
+  group_by(gender) |> 
+  summarize(number = n(), 
+            percent = number * 100 / 10251)
+
+Females account for 38.55% of the individuals in the data.
+
+ETHNICITY:
+
+{r}
+accord_key |> 
+  group_by(raceclass) |> 
+  summarize(number = n(),
+            percent = number*100 / 10251)
+
+Black: 19.05%
+
+Hispanic: 7.19%
+
+Other: 11.39%
+
+White: 62.36%
+
+What are the mean (with SD) and median (with IQR) numbers of BP/blood sugar measures per individual?
+
+{r}
+## mean and standard deviation of bp
+
+bloodpressure |> 
+  group_by(MaskID) |> ## sorted by MaskID because each had several entries 
+  summarize(
+    mean = mean(sbp, na.rm = TRUE),
+    sd   = sd(sbp, na.rm = TRUE)
+  )
+
+## mean and standard deviation of blood sugar 
+
+hba1c |> 
+  group_by(MaskID) |> 
+  summarize(
+    mean = mean(hba1c, na.rm = TRUE),
+    sd   = sd(hba1c, na.rm = TRUE)
+  )
+
+# made sure to remove missing values 
+
+
+{r}
+
+## median and IQR for blood pressure
+
+bloodpressure |> 
+  group_by(MaskID) |> 
+  summarize(
+    median = median(sbp, na.rm = TRUE),
+    IQR    = IQR(sbp, na.rm = TRUE)
+    
+  )
+
+## median and IQR for blood sugar
+
+hba1c |> 
+  group_by(MaskID) |> 
+  summarize(
+    median = median(hba1c, na.rm = TRUE),
+    IQR    = IQR(hba1c, na.rm = TRUE)
+    
+  )
+
+
+
+Merge baseline data
+
+Extract baseline (BLR visit) SBP/DBP and HbA1c levels to their own objects
+
+{r}
+
+## extract BLR from SBP/BPR
+
+blr_bp <- bloodpressure |> 
+  select(Visit, sbp, dbp, MaskID) |> 
+  filter(Visit == "BLR")
+
+## extract BLR from HbA1c
+
+blr_hba1c <- hba1c |> 
+  filter(Visit == "BLR")
+  
+
+How many missing values are there for SBP/DBP and HbA1c levels at baseline?
+
+{r}
+
+## detect missing values in bp
+
+blr_bp |> 
+  summarize(
+    sum(is.na(sbp)),
+    sum(is.na(dbp))
+  )
+
+## including hr
+
+bloodpressure |> 
+  filter(Visit == "BLR") |> 
+  summarize(
+    sum(is.na(sbp)),
+    sum(is.na(dbp)),
+    sum(is.na(hr))
+  )
+## detect missing values in hba1c
+
+blr_hba1c |> 
+  summarize(
+    sum(is.na(hba1c))
+  )
+
+{r}
+
+## checking answer using filter 
+
+blr_bp |> 
+  filter(is.na(dbp) | is.na(sbp))
+
+There are no missing values with sbp and dbp at baseline, but there are 3 missing values for heart rate at baseline.
+
+There are no missing values with hba1c at baseline.
+
+Merge the above two datasets from part (a) with accord_key and store it in a new object baseline
+
+Hint: merging datasets needs a common field to join by; what makes sense to join on here?
+
+All datasets share "MaskID", and "Visit" for bp and hba1c
+
+{r}
+
+## merging datasets with accord_key
+
+baseline <- blr_bp |> 
+  left_join(blr_hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+
+
+What are the distributions for baseline SBP, DBP, and HbA1c? Provide graphical summaries. What can you say about the distributions?
+
+The distributions are peaked (uni-modal), meaning that most participants are within a normal range of sbp, dbp, and hbA1c.
+
+{r}
+
+## distributions for sbp
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 10, fill = "blue", aes(x = sbp))
+
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "blue", aes(x = sbp))
+
+
+{r}
+
+## distributions for dbp 
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 5, fill = "red", aes(x = dbp))
+# binwidth by 5 because dbp is in smaller range of mm/Hg
+
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "red", aes(x = dbp))
+
+{r}
+
+## distribution for hba1c
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 0.5, fill = "green", aes(x = hba1c ))
+
+# binwidth by 0.5 because much smaller range
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "green", aes(x = hba1c))
+
+
+{r, eval = FALSE }
+
+## overlapped sbp and dbp because both are measured by millimeters of mercury (mm/Hg)
+
+#create overlaying density plots (did not do, but will figure out)
+baseline |> 
+ plot(density(r)) 
+lines(density(baseline$dbp), col = "red") 
+lines(density(baseline$sbp), col = "blue") 
+
+{r}
+ggplot(baseline) +
+  geom_density()
+  
+
+Report mean (SD) and median (IQR) of baseline SBP, DBP, and HbA1c for the whole population, male/female, and different ethnic groups.
+
+{r}
+## creating function (failed attempt ) 
+distribution <- function(argument1, argument2, argument3) {
+ argument1 |> 
+  group_by({{argument2}}) |> 
+  summarize(
+    mean = mean({{argument3}}, na.rm = TRUE),
+    sd = sd({{argument3}}, na.rm = TRUE),
+    median = median({{argument3}}, na.rm = TRUE),
+    IQR = IQR({{argument3}}, na.rm = TRUE)) 
+} 
+distribution(baseline, "raceclass", "sbp")
+
+
+{r}
+
+## creating function (failed attempt & results)
+distribution <- function(data, variable, argument3) {
+ data |> 
+  group_by({{variable}}) |> 
+  summarize(
+    mean = mean({{argument3}}, na.rm = TRUE),
+    sd = sd({{argument3}}, na.rm = TRUE),
+    median = median({{argument3}}, na.rm = TRUE),
+    IQR = IQR({{argument3}}, na.rm = TRUE)) 
+} 
+distribution(baseline, raceclass, sbp)
+
+## can also use get(argument) 
+## not a string
+
+Hint. You may want to create a function to avoid redundant code, as similar calculations will be repeated.
+
+{r}
+## calculated individually
+
+## whole population sbp 
+
+baseline |> 
+  summarize(
+    mean = mean(sbp, na.rm = TRUE),
+    sd = sd(sbp, na.rm = TRUE),
+    median = median(sbp, na.rm = TRUE),
+    IQR = IQR(sbp, na.rm = TRUE)
+    ) 
+
+## raceclass sbp 
+
+baseline |> 
+  group_by(raceclass) |> 
+  summarize(
+    mean = mean(sbp, na.rm = TRUE),
+    sd = sd(sbp, na.rm = TRUE),
+    median = median(sbp, na.rm = TRUE),
+    IQR = IQR(sbp, na.rm = TRUE)
+    ) 
+
+## gender sbp 
+
+baseline |> 
+  group_by(gender) |> 
+  summarize(
+    mean = mean(sbp, na.rm = TRUE),
+    sd = sd(sbp, na.rm = TRUE),
+    median = median(sbp, na.rm = TRUE),
+    IQR = IQR(sbp, na.rm = TRUE)
+    ) 
+
+
+{r}
+## whole dbp
+baseline |> 
+  summarize(
+    mean = mean(dbp, na.rm = TRUE),
+    sd = sd(dbp, na.rm = TRUE),
+    median = median(dbp, na.rm = TRUE),
+    IQR = IQR(dbp, na.rm = TRUE)
+    ) 
+## raceclass dbp
+
+baseline |> 
+  group_by(raceclass) |> 
+  summarize(
+    mean = mean(dbp, na.rm = TRUE),
+    sd = sd(dbp, na.rm = TRUE),
+    median = median(dbp, na.rm = TRUE),
+    IQR = IQR(dbp, na.rm = TRUE)
+    ) 
+## gender dbp 
+
+baseline |> 
+  group_by(gender) |> 
+  summarize(
+    mean = mean(dbp, na.rm = TRUE),
+    sd = sd(dbp, na.rm = TRUE),
+    median = median(dbp, na.rm = TRUE),
+    IQR = IQR(dbp, na.rm = TRUE)
+    ) 
+
+{r}
+## whole hba1c
+
+baseline |> 
+  summarize(
+    mean = mean(hba1c, na.rm = TRUE),
+    sd = sd(hba1c, na.rm = TRUE),
+    median = median(hba1c, na.rm = TRUE),
+    IQR = IQR(hba1c, na.rm = TRUE)
+    ) 
+
+## raceclass hba1c
+
+baseline |> 
+  group_by(raceclass) |> 
+  summarize(
+    mean = mean(hba1c, na.rm = TRUE),
+    sd = sd(hba1c, na.rm = TRUE),
+    median = median(hba1c, na.rm = TRUE),
+    IQR = IQR(hba1c, na.rm = TRUE)
+    ) 
+
+## gender hba1c
+
+baseline |> 
+  group_by(gender) |> 
+  summarize(
+    mean = mean(hba1c, na.rm = TRUE),
+    sd = sd(hba1c, na.rm = TRUE),
+    median = median(hba1c, na.rm = TRUE),
+    IQR = IQR(hba1c, na.rm = TRUE)
+    ) 
+
+Understand the trend of SBP/DBP and HbA1c over time/visit
+
+Create a new longitudinal dataset by combining three datasets
+
+{r}
+long_data <- bloodpressure |> 
+  filter(!(Visit == "EXIT")) |> 
+  left_join(hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  na.omit() |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+
+
+Note: the EXIT in Visit should be excluded because it is not consistent across individuals. What fields do we need to join the datasets by here?
+
+For each visit, calculate the mean (i.e., average) SBP over all individuals
+
+{r}
+long_data |> 
+  group_by(Visit) |> 
+  summarize(meanSBP = mean(sbp, na.rm = TRUE))
+
+Plot visit (x-axis) vs. mean SBP (y-axis) (creating a "mean profile plot"). What can you observe from the plot?
+
+{r}
+long_data |> 
+  group_by(Visit) |> 
+  summarize(
+   meansbp = mean(sbp) 
+  ) |> 
+  ggplot(
+    aes(x = meansbp, y = Visit,)
+  ) +
+  geom_point() +
+  labs( 
+    title = "SBP Mean Profile Plot",
+        x = "Visit",
+        y = "Mean SBP"
+    )
+  
+  
+
+Repeat this procedure for DBP and HbA1c with your findings.
+
+{r}
+
+## DBP
+
+long_data |> 
+  group_by(Visit) |> 
+  summarize(
+   meandbp = mean(dbp) 
+  ) |> 
+  ggplot(
+    aes(x = meandbp, y = Visit,)
+  ) +
+  geom_point() +
+  labs( 
+    title = "DBP Mean Profile Plot",
+        x = "Visit",
+        y = "Mean DBP"
+    )
+
+## hba1c
+
+long_data |> 
+  group_by(Visit) |> 
+  summarize(
+   meanhba1c = mean(hba1c) 
+  ) |> 
+  ggplot(
+    aes(x = meanhba1c, y = Visit,)
+  ) +
+  geom_point() +
+  labs( 
+    title = "HbA1c Mean Profile Plot",
+        x = "Visit",
+        y = "Mean HbA1c"
+    )
+  
+  
+
+Bonus exercise
+
+Create a new variable called "glycemic_arm"
+
+{r}
+glycemic_data <- long_data |> 
+  mutate(
+   glycemic_arm = case_when(
+      arm %in% c(3, 4, 7, 8) ~ "1" ,
+      arm %in% c(1, 2, 5, 6) ~ "0"
+    )
+    )
+
+If arm = 3, 4, 7, 8 (intensive glucose treatment), then glycemic_arm = 1;
+
+If arm = 1, 2, 5, 6 (standard glucose treatment), then glycemic_arm = 0
+
+Related information:
+
+arm in accord_key: numeric designation of randomization assignment: 1‐8;
+
+treatment in accord_key: descriptive term for treatment arm:
+
+arm = 1, 3: intensive BP
+
+arm = 2, 4: standard BP
+
+arm = 5, 6, 7, 8: not in BP treatment arm
+
+arm = 5, 7: lipid Fibrate
+
+arm = 6, 8: lipid placebo
+
+arm = 1, 2, 3, 4: not in lipid treatment arm
+
+arm = 3, 4, 7, 8: intensive glucose
+
+arm = 1, 2, 5, 6: standard glucose
+
+Similar to the above mean profile plot for the whole group, plot mean profile plot for HbA1c but separated by "glycemic_arm" in the same graph.
+
+{r}
+glycemic_data |> 
+  group_by(Visit, glycemic_arm) |> 
+  summarize(
+   meanhba1c = mean(hba1c) 
+  ) |> 
+  ggplot(
+    aes(x = meanhba1c, y = Visit, color = glycemic_arm)
+  ) +
+  geom_point() +
+  labs( 
+    title = "HbA1c Mean Profile Plot",
+        x = "Visit",
+        y = "Mean HbA1c"
+    )
+
+
