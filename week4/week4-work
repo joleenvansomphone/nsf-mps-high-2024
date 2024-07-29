@@ -1,0 +1,896 @@
+---
+title: "Week 4"
+author: "Joleen & Ethan"
+format: html
+editor: visual
+toc: true 
+---
+
+```{r, warning = FALSE, message = FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(readr)
+library(readxl)
+library(patchwork)
+library(sjPlot)
+library(tidyverse)
+library(repurrrsive)
+library(rvest)
+```
+
+```{r, warning = FALSE, message = FALSE}
+# loading data
+
+datasets_folder <- "/Users/joleen/Desktop/R_Projects_Personal/datasets/"
+
+accord_key <- read_csv(paste(datasets_folder, "accord_key.csv", sep = "")) |>
+  print(width = Inf)
+
+bloodpressure <- 
+  read_csv(paste(datasets_folder, "bloodpressure.csv", sep = "")) |>
+  print(width = Inf)
+
+hba1c <- read_csv(paste(datasets_folder, "hba1c.csv", sep = "")) |>
+  print(width = Inf)
+```
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## R Tidyverse Style Guide (Chapter 1-5)
+
+### tidyverse style guide 1-5
+
+-   File names:
+    -   Meaningful and end in .R
+    -   Avoid special characters
+    -   Use numbers, letters, -, \_
+-   File structure:
+    -   Use - or = to break up file into readable chunks
+
+### tidyverse style guide (2/5)
+
+-   Object names: lowercase letters, numbers, underscores
+-   Spacing: after comma, not before
+-   Parentheses: no spaces inside or outside for regular function calls
+-   Embracing operator {{ }}: always inner spaces
+
+### tidyverse style guide (3/5)
+
+-   Naming: Use verbs for function names1.
+-   Long lines: Two options if function name and definition can’t fit on a single line
+-   Function-indent: Each argument on its own line, indent to match the opening ( of function
+-   Comments: Use to explain the “why” not the “what” or "how"
+
+### tidyverse style guide (4/5)
+
+-   Introduction: Use %\>% to emphasize a sequence of actions
+-   Whitespace: %\>% should always have a space before it, usually followed by a new line
+-   Long lines: If arguments to a function don’t fit on one line, put each argument on its own line and indent
+-   Short pipes: A one-step pipe can stay on one line, but consider rewriting it to a regular function call if not planning to expand
+
+### tidyverse style guide (5/5)
+
+-   
+
+    -   should always have a space before it, and should be followed by a new line
+
+-   if the arguments to a ggplot2 layer don’t all fit on one line, put each argument on its own line and indent
+
+-   Ex: ggplot(aes(x = Sepal.Width, y = Sepal.Length, color = Species)) + geom_point() + labs( x = "Sepal width, in cm", y = "Sepal length, in cm", title = "Sepal length vs. width of irises" )
+
+## R Tidyverse (6-11)
+
+-   Overall, ensuring that files are appropriate and suited for publication/Github
+
+-   Generally:
+
+    -   The first line of document contains (under 50-character) title of what was accomplished in sentence case, but no period
+
+    -   If needed, use “\@description” to include paragraph-formatted context 
+
+## Explaining Functions:
+
+-   Functions, arguments, and file names should be wrapped in backticks. Function names should include parentheses
+
+    -   omit “**the** argument” or “**the** function”
+
+    ```{{r}}
+    #' Good
+
+    #'  * In `stat_bin()`, `binwidth` now also takes functions.
+
+    #' Bad
+
+    #'  * In the stat_bin function, "binwidth" now also takes functions.
+    ```
+
+## Error Messages:
+
+-   One-sentence (in sentence format with a period)
+
+    -   Explains the error of the code
+
+    -   Why it did not achieve desirable outcome
+
+    -   Typically avoid source of error (specific columns, rows, etc.) if unclear
+
+-   You can also use the "i" to add hints as to why errors may have happened
+
+    -   Typically in a “Did you forget to…?” format
+
+-   Ex of Error Message:
+
+    ```{r}
+
+    #> Error:
+
+    #> ! `n` must be a numeric vector, not a character vector.
+    ```
+
+-   If you cannot figure out why, use “can’t” : 
+
+    ```{r, message = FALSE, echo = TRUE}
+
+    # run mtcars %>% pull(b)
+
+    #> Error:
+
+    #> ! Can't find column `b` in `.data`.
+    ```
+
+## R for Data Science (Chapter 20-24)
+
+### Overall:
+
+-   Takes what we learned previously and apply it to multiple types of files (exel, spreadsheets, googlesheets, etc.)
+
+    -   The main consistent change was the function for calling these files
+
+-   applying previous dplyr knowledge
+
+### Lists
+
+-   Use `str()` for space efficiency when printing lists
+-   Hierarchical structures
+
+```{r}
+x1 <- list(1:4, "a", TRUE)
+x1
+```
+
+```{r}
+str(x1)
+
+```
+
+```{r}
+# Creating hierarchical structures with lists
+
+x5 <- list(1, list(2, list(3, list(4, list(5)))))
+str(x5)
+```
+
+```{r}
+
+# Creating flat structures with vectors 
+
+y5 <- c((1), c(2), c(3), c(4), c(5))
+str(y5)
+
+```
+
+-   list-columns (saving resamples/ model outputs in a dataframe
+
+```{r}
+
+df <- tibble(
+  x = 1:2, 
+  y = c("a", "b"),
+  z = list(list(1, 2), list(3, 4, 5))
+)
+
+print(df)
+```
+
+```         
+
+### Web-Scrapping for data
+```
+
+-   Okay/Legal if:
+
+    -   Public
+
+    -   Not Personal
+
+    -   No Copyright
+
+-   Check through the terms of service to make sure
+
+-   Should be in an "html" format (package rvest has a lot of resources for experimentation this way)
+
+-   Often used for:
+
+    -   Individual research
+
+    -   Price Monitoring
+
+    -   News Monitoring
+
+```{r}
+url <- "https://rvest.tidyverse.org/articles/starwars.html"
+html <- read_html(url)
+
+section <- html |> html_elements("section")
+section
+```
+
+```{r}
+
+# extracting and organizing movie titles and directors
+
+section |> html_element("h2") |> html_text2()
+
+
+section |> html_element(".director") |> html_text2()
+```
+
+```{r}
+
+# turning into tibble 
+
+tibble(
+  title = section |> 
+    html_element("h2") |> 
+    html_text2(),
+  released = section |> 
+    html_element("p") |> 
+    html_text2() |> 
+    str_remove("Released: ") |> 
+    parse_date(),
+  director = section |> 
+    html_element(".director") |> 
+    html_text2(),
+  intro = section |> 
+    html_element(".crawl") |> 
+    html_text2()
+)
+```
+
+\`\`\`\`
+
+### Interesting info:
+
+```         
+-   A rule of thumb is that you want twice as much memory as the size of the data
+
+    -   So, to use a more space-efficient way to load in csv data, use “arrow::open_dataset()” instead of “read_csv()” under the “arrow” package
+
+-   Drawbacks of arrow: relatively slow 
+```
+
+## R for Data Science (Chapter 25-29)
+
+```{r results='asis', echo=FALSE, include=FALSE,}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+
+library(nycflights13)
+library(dplyr)
+library(knitr)
+```
+
+### Functions (1/3)
+
+-   Introduction to Functions
+-   Functions automate common tasks, making code more powerful and general than copy-pasting
+-   Writing functions has several advantages:
+    -   Easy names
+    -   Reusability
+    -   Error Reduction
+
+### Functions (2/3)
+
+-   Vector Functions:
+
+    -   Take one or more vectors as input and return a vector as output.
+    -   Ex.
+
+    ```{r}
+     
+    clamp <- function(x, min, max) {
+      case_when(
+        x < min ~ min,
+        x > max ~ max,
+        .default = x
+      )
+    }
+
+    clamp(1:10, min = 3, max = 7) 
+      
+    ```
+
+### Functions (3/3)
+
+-   Data Frame Functions:
+    -   Take a data frame as input and return a data frame as output.
+-   Plot Functions:
+    -   Take a data frame as input and return a plot as output.
+    -   Help in visualizing data effectively.
+
+### Iteration (1/2)
+
+-   Iteration: performing the same task on different objects repeatedly
+-   Looks different in R than other languages because many operations are implicit
+    -   Ex: doubling a numeric vector can be done with 2 \* x instead of a loop
+
+### Iteration (2/2)
+
+-   Modifying Multiple Columns
+    -   Example: Counting observations and computing the median of every column in a tibble.
+    -   Instead of copy-pasting code for each column, you can use the across() function
+-   Reading Multiple Files
+    -   Example: purrr package from tidyverse
+        -   list.files() to get a list of names, map() to read each file into a data frame
+-   Saving Multiple Objects
+    -   Discusses methods for saving multiple objects into various file formats
+    -   dbAppendTable() for databases, write_csv() for CSV files, and ggsave() for saving plots, etc.
+
+### Field Guide to Base R (1/2)
+
+-   Subsetting with \[:
+
+    -   Used to extract elements from vectors and data frames.
+    -   Example:
+
+    ```{r}
+
+    x <- c("one", "two", "three", "four", "five")
+    x[c(3, 2, 5)]  # Returns "three", "two", "five"
+
+    ```
+
+### Field Guide to Base R (2/2)
+
+-   Base R Plotting:
+-   Basic plotting functions like plot(), hist(), and boxplot().
+-   Example:
+
+```{r}
+plot(x = 1:10, y = rnorm(10))
+```
+
+### Quarto (1/1)
+
+-   Went over basic Quarto Usage
+-   Rendering, formatting, functions, output, etc.
+-   Ex: Use quarto_render() to specify formats in your code
+    -   quarto_render("my_document.qmd", output_format = c("html", "pdf"))
+
+## ACCORD NEMJ
+
+-   **Who:**
+
+    -   10,251 patients (mean age 62.2) with median glycated hemoglobin level of 8.1% 
+
+        -   (HbA1c means blood sugar monitored in lifespan of red blood cell, should be under 5.7%)
+
+-   **What:**
+
+    -   Intensive trials: HbA1c levels below 6% 
+
+        -   Ended up being 6.4%
+
+    -   Standard trials: HbA1c levels between 7 and 7.9%
+
+        -   Ended up being 7.5%
+
+    -   Trial ended 17 months before scheduled date
+
+-   **Why?**
+
+    -   An increase of 1% in glycemic hemoglobin levels
+        -   18% increase in cardiovascular event risks
+        -   12-14% increase in risk for death
+
+-   **Control** was thought to **reduce** these levels and risks
+
+-   The hypothesis was tested and supported in previous trials, yet:
+
+    -   did not successfully use randomized trials
+    -   not focused on cardiovascular events
+        -   The findings from these trials were still used to create a guideline for T2 Diabetes patients and their HbA1c levels
+
+        -   The ACCORD data trials allowed for the intention-to-treat principle, which embraces randomization 
+
+### Main Questions
+
+-   Methods for Statistical Analysis:
+
+    -   SAS Software 
+
+    -   Chi square tests
+
+    -   Two sample t-tests 
+
+    -   Medians and IQRs at **each visit**
+
+    -   Fisher’s exact test for key safety outcomes
+
+    -   Time-to-Event Tests (measuring the time until event of interest occurs):
+
+        -   Cox Proportional-Hazards Regression (hypoglycemia, death, cardiovascular events)
+
+            -   Measures the effect of multiple variables on the time to the event of interest
+
+            -   Hazard ratio (normally on 95% confidence interval)
+
+                -   HR = 1: Indicates no difference in risk between the two groups. The event rates are the same.
+
+                -   HR \> 1: Indicates a higher risk of the event occurring in the treatment group compared to the control group.
+
+                -   HR \< 1: Indicates a lower risk of the event occurring in the treatment group compared to the control group.
+
+-   ![](Desktop/R_Projects_Personal/Data%20Science%20Internship%20Presentations/NEJMimage.jpg)
+
+## ACCORD Lancet
+
+### Lancet Article
+
+-   ACCORD trial: parallel-group, randomised, 77 clinical sites in North America
+-   Participants: people with diabetes, high HbA1c concentrations (\>7·5%), cardiovascular disease (or ≥2 cardiovascular risk factors)
+-   Aim: investigate if blood glucose reduction decreases microvascular complications rate in type 2 diabetes
+-   Findings: Intensive therapy didn’t reduce risk of advanced microvascular outcomes
+
+## ACCORD Exercise (2)
+
+`female`: Change variable name to `gender` and recode the variable to `Female` if `gender = 1`, and `Male` if `gender = 0`.
+
+```{r}
+new_accord <- accord_key |> 
+  mutate(
+    female = factor(female,
+                    levels = c("0", "1"),
+                    labels = c("Male", "Female"))
+  ) |> 
+  rename(gender = female)
+
+glimpse(new_accord)
+```
+
+```{r}
+## used case_when as opposed to if_else for organization
+
+test_accord <- accord_key |> 
+  rename(gender = female) |> 
+  mutate(
+    gender = case_when(
+      gender == 0 ~ "Male",
+      gender == 1 ~ "Female"
+    )
+    )
+glimpse(new_accord)
+```
+
+`raceclass`: Move the category `Others` to the end, which is natural (hint: set the `levels` of a `factor`)
+
+```{r}
+
+mod_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("0","1","2","3"),
+                       labels = c("Other","White","Black","Hispanic"))
+  )
+
+# Initially thought the levels had to be a number first that corresponds to labels, which resulted in N/A
+
+glimpse(mod_accord)
+```
+
+```{r}
+
+new_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("Other","White","Black","Hispanic"))
+  ) |> 
+  arrange(desc(raceclass))
+
+glimpse(new_accord)
+```
+
+## ACCORD Exercise (3)
+
+### Briefly describe the datasets
+
+### How many individuals are included in each file?
+
+```{r}
+num_individuals_accord_key <- nrow(accord_key)
+num_individuals_bloodpressure <- nrow(bloodpressure)
+num_individuals_hba1c <- nrow(hba1c)
+cat("Number of individuals in accord_key dataset:", num_individuals_accord_key, "\n")
+cat("Number of individuals in bloodpressure dataset:", num_individuals_bloodpressure, "\n")
+cat("Number of individuals in hba1c dataset:", num_individuals_hba1c, "\n")
+```
+
+### What's the percentage of females and of each ethnicity group in `accord_key`? Describe the results numerically and visually.
+
+Females:
+
+```{r}
+percentage_female <- mean(new_accord == "Female") * 100
+cat("Percentage of females in accord_key:", percentage_female, "%\n")
+```
+
+Ethnicity:
+
+```{r}
+
+accord_key |>
+  group_by(raceclass) |>
+  summarize(number = n(),
+            percent = number*100 / 10251)
+```
+
+### What are the mean (with SD) and median (with IQR) numbers of BP/blood sugar measures per individual?
+
+```{r}
+bloodpressure_grouped <- group_by(bloodpressure, MaskID)
+bp_measures_per_individual <- summarise(bloodpressure_grouped, n_bp_measures = n())
+
+
+mean_bp <- mean(bp_measures_per_individual$n_bp_measures)
+sd_bp <- sd(bp_measures_per_individual$n_bp_measures)
+median_bp <- median(bp_measures_per_individual$n_bp_measures)
+iqr_bp <- IQR(bp_measures_per_individual$n_bp_measures)
+
+
+hba1c_grouped <- group_by(hba1c, MaskID)
+hba1c_measures_per_individual <- summarise(hba1c_grouped, n_hba1c_measures = n())
+
+
+mean_hba1c <- mean(hba1c_measures_per_individual$n_hba1c_measures)
+sd_hba1c <- sd(hba1c_measures_per_individual$n_hba1c_measures)
+median_hba1c <- median(hba1c_measures_per_individual$n_hba1c_measures)
+iqr_hba1c <- IQR(hba1c_measures_per_individual$n_hba1c_measures)
+
+
+
+cat("Mean number of BP measures per individual:", mean_bp, "(SD:", sd_bp, ")")
+cat("Median number of BP measures per individual:", median_bp, "(IQR:", iqr_bp, ")")
+cat("Mean number of HbA1c measures per individual:", mean_hba1c, "(SD:", sd_hba1c, ")")
+cat("Median number of HbA1c measures per individual:", median_hba1c, "(IQR:", iqr_hba1c, ")")
+```
+
+## ACCORD Exercise (4)
+
+### **4.1 Extract baseline (`BLR` visit) SBP/DBP and HbA1c levels to their own objects**
+
+```{r}
+## extract BLR from SBP/BPR
+
+blr_bp <- bloodpressure |> 
+  select(Visit, sbp, dbp, MaskID) |> 
+  filter(Visit == "BLR")
+
+## extract BLR from HbA1c
+
+blr_hba1c <- hba1c |> 
+  filter(Visit == "BLR")
+```
+
+### **4.2 How many missing values are there for SBP/DBP and HbA1c levels at baseline?**
+
+```{r}
+## detect missing values in bp
+
+blr_bp |> 
+  summarize(
+    sum(is.na(sbp)),
+    sum(is.na(dbp))
+  )
+
+
+```
+
+```{r}
+## including hr
+
+bloodpressure |> 
+  filter(Visit == "BLR") |> 
+  summarize(
+    sum(is.na(sbp)),
+    sum(is.na(dbp)),
+    sum(is.na(hr))
+  )
+```
+
+```{r}
+## detect missing values in hba1c
+
+blr_hba1c |> 
+  summarize(
+    sum(is.na(hba1c))
+  )
+```
+
+```{r}
+## checking answer using filter 
+
+blr_bp |> 
+  filter(is.na(dbp) | is.na(sbp))
+
+```
+
+There are no missing values with sbp and dbp at baseline, but there are 3 missing values for heart rate at baseline.
+
+There are no missing values with hba1c at baseline.
+
+### **4.3 Merge the above two datasets from part (a) with `accord_key` and store it in a new object `baseline`**
+
+```{r}
+## merging datasets with accord_key
+
+baseline <- blr_bp |> 
+  left_join(blr_hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+```
+
+### **4.4 What are the distributions for baseline SBP, DBP, and HbA1c? Provide graphical summaries. What can you say about the distributions?**
+
+The distributions are peaked (uni-modal), meaning that most participants are within a normal range of sbp, dbp, and hbA1c.
+
+```{r}
+## distributions for sbp
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 10, fill = "blue", aes(x = sbp))
+
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "blue", aes(x = sbp))
+
+```
+
+```{r}
+## distributions for dbp 
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 5, fill = "red", aes(x = dbp))
+# binwidth by 5 because dbp is in smaller range of mm/Hg
+
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "red", aes(x = dbp))
+```
+
+```{r}
+## distribution for hba1c
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 0.5, fill = "green", aes(x = hba1c ))
+
+# binwidth by 0.5 because much smaller range
+# density 
+
+ggplot(baseline)+
+  geom_density(fill = "green", aes(x = hba1c))
+
+```
+
+```{r}
+
+## facet graph sbp and dbp distributions
+
+ggplot(baseline) +
+ geom_density(fill = "red", aes(x = dbp)) +
+  geom_density(fill = "blue", aes(x = sbp), alpha = 0.5) +
+  labs(
+    title = "Distribution of Systolic Blood Pressure and Diastolic Blood Pressure",
+    x = "mm/Hg"
+  )
+```
+
+### **4.5 Report mean (SD) and median (IQR) of baseline SBP, DBP, and HbA1c for the whole population, male/female, and different ethnic groups.**
+
+```{r}
+## creating function 
+distribution <- function(data, variable, variable2) {
+ data |> 
+  group_by({{variable}}) |> 
+  summarize(
+    mean = mean({{variable2}}, na.rm = TRUE),
+    sd = sd({{variable2}}, na.rm = TRUE),
+    median = median({{variable2}}, na.rm = TRUE),
+    IQR = IQR({{variable2}}, na.rm = TRUE)) 
+} 
+distribution(baseline, raceclass, sbp)
+
+## can also use get(argument) 
+## not a string
+```
+
+```{r}
+distribution(baseline, gender, sbp )
+```
+
+## ACCORD Exercise (5)
+
+### Understand the trend of SBP/DBP and HbA1c over time/visit
+
+### Create a new longitudinal dataset by combining three datasets
+
+Note: the `EXIT` in `Visit` should be excluded because it is not consistent across individuals. What fields do we need to join the datasets by here?
+
+```{r}
+bloodpressure_filtered <- bloodpressure %>%
+  filter(Visit != "EXIT")
+
+hba1c_filtered <- hba1c %>%
+  filter(Visit != "EXIT")
+combined_data <- left_join(bloodpressure_filtered, hba1c_filtered, by = c("MaskID", "Visit"))
+head(combined_data)
+```
+
+### For each visit, calculate the mean (i.e., average) SBP over all individuals
+
+```{r}
+mean_sbp_by_visit <- combined_data %>%
+  group_by(Visit) %>%
+  summarize(mean_sbp = mean(sbp, na.rm = TRUE))
+
+
+print(mean_sbp_by_visit)
+```
+
+### Plot visit (x-axis) vs. mean SBP (y-axis) (creating a "mean profile plot"). What can you observe from the plot?
+
+```{r}
+ggplot(mean_sbp_by_visit, aes(x = Visit, y = mean_sbp)) +
+  geom_line(color = "blue") +  # Line plot
+  geom_point(color = "red", size = 3) +  # Points for each visit
+  labs(
+    title = "Mean Profile Plot of SBP by Visit",
+    x = "Visit",
+    y = "Mean SBP"
+  ) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+### Repeat this procedure for DBP and HbA1c with your findings.
+
+```{r}
+mean_dbp_by_visit <- combined_data %>%
+  group_by(Visit) %>%
+  summarize(mean_dbp = mean(dbp, na.rm = TRUE))
+
+print(mean_dbp_by_visit)
+
+
+ggplot(mean_dbp_by_visit, aes(x = Visit, y = mean_dbp)) +
+  geom_line(color = "blue") +  # Line plot
+  geom_point(color = "red", size = 3) +  # Points for each visit
+  labs(
+    title = "Mean Profile Plot of DBP by Visit",
+    x = "Visit",
+    y = "Mean DBP"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+
+
+
+mean_hba1c_by_visit <- combined_data %>%
+  group_by(Visit) %>%
+  summarize(mean_hba1c = mean(hba1c, na.rm = TRUE))
+
+print(mean_hba1c_by_visit)
+
+
+library(ggplot2)
+
+ggplot(mean_hba1c_by_visit, aes(x = Visit, y = mean_hba1c)) +
+  geom_line(color = "blue") +  # Line plot
+  geom_point(color = "red", size = 3) +  # Points for each visit
+  labs(
+    title = "Mean Profile Plot of HbA1c by Visit",
+    x = "Visit",
+    y = "Mean HbA1c"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## ACCORD Exercise (6.1)
+
+### Create a new variable called "glycemic_arm"
+
+-   If `arm = 3, 4, 7, 8` (intensive glucose treatment), then `glycemic_arm = 1`;
+-   If `arm = 1, 2, 5, 6` (standard glucose treatment), then `glycemic_arm = 0`
+
+```{r}
+accord_key <- accord_key %>%
+  mutate(glycemic_arm = case_when(
+    arm %in% c(3, 4, 7, 8) ~ 1,
+    arm %in% c(1, 2, 5, 6) ~ 0,
+  ))
+
+head(accord_key)
+```
+
+## ACCORD Exercise (6.2)
+
+### Create a mean profile plot
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+long_data <- bloodpressure |> 
+  filter(!(Visit == "EXIT")) |> 
+  left_join(hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  na.omit() |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+```
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+glycemic_data <- long_data |> 
+  mutate(
+   glycemic_arm = case_when(
+      arm %in% c(3,4,7,8) ~ "1",
+      arm %in% c(1,2,5,6) ~ "0"
+    )
+    )
+```
+
+```{r}
+glycemic_data |> 
+  group_by(Visit, glycemic_arm) |> 
+  summarize(
+   meanhba1c = mean(hba1c) 
+  ) |> 
+  ggplot(
+    aes(x = meanhba1c, y = Visit, color = glycemic_arm)
+  ) +
+  geom_point() +
+  labs( 
+    title = "Glycated Haemoglobin Mean Profile Plot",
+        x = "Visit",
+        y = "Mean Glycated Haemoglobin", 
+    color = "Glycemic Arm"
+    )
+
+```
+
+## Challenges & Questions
+
+Joleen:
+
+-   What are common and useful sites for web-scrapping? (without legal concerns)
+
+-   How do you use the SAS software with R?
+
+    -   Is it often used with R in the data science field?
+
+Ethan:
+
+-   Struggle - getting the syntax right ( using -\> instead of = )
+
+-   What are the best methods for combining datasets?
