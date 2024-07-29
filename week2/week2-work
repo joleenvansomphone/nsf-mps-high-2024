@@ -1,0 +1,336 @@
+---
+title: "Week 2 Presentation"
+author: "Joleen Vansomphone & Evie Shen"
+format: pptx
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Loading Necessary Pacakges:
+
+(ggplot2, knitr, tidyverse, magrittr, readr,) (bp_data, physical exam data)
+
+```{r loading}
+library(ggplot2)
+library(knitr)
+library(tidyverse)
+library(magrittr) 
+library(readr)
+
+bp_data <- read_csv("/Users/joleen/Desktop/R_Projects_Personal/Week_2/bloodpressure.csv")
+
+pe_data <- read_csv("/Users/joleen/Desktop/R_Projects_Personal/Week_2/f36_annualfollowupphysicalexam.csv")
+
+```
+
+## Overview - Hands-On Programming with R - Objects
+
+Object: a name used to call up stored data
+
+```{r,  echo = TRUE}
+a <- 1
+a
+die <- 1:6
+die
+```
+
+Objects show up in the environment so you can keep track of the objects you have created
+
+## Overview - Hands-On Programming with R - Functions
+
+Functions: asking R to do a task
+
+```{r,  echo = TRUE}
+mean(1:6)
+round(3.1415, digits = 2)
+sample(die, size = 2, replace = TRUE)
+```
+
+## Overview - Hands-On Programming with R - Arguments
+
+Arguments: values supplied in functions that appear in the body of longer functions
+
+```{r,  echo = TRUE}
+roll2 <- function(bones) {
+  dice <- sample(bones, size = 2, replace = TRUE)
+  sum(dice)
+}
+roll2(die)
+```
+
+## Overview - Hands-On Programming with R - Vectors
+
+Vector: a grouped list of data
+
+```{r,  echo = TRUE}
+die <- c(1, 2, 3, 4, 5, 6)
+int <- c(-1L, 2L, 4L)
+text <- c("Hello",  "World")
+logic <- c(TRUE, FALSE, TRUE)
+```
+
+Vectors can store doubles, integers, characters, and logicals (most common types of objects)
+
+## Overview - Hands-On Programming with R - Dataframes
+
+-   Data frames store data as a sequence of columns
+-   Each column can be a different data type
+-   Every column in a data frame must be the same length
+
+```{r,  echo = TRUE}
+df <- data.frame(face = c("ace", "two", "six"),  
+  suit = c("clubs", "clubs", "clubs"), value = c(1, 2, 3))
+df
+```
+
+## Overview - Hands-On Programming with R - Modifying Values
+
+Modifying values is replacing values in a vector.
+
+```{r,  echo = TRUE}
+vec <- c(0, 0, 0, 0, 0, 0)
+vec[1] <- 1000
+vec
+vec[4:6] <- vec[4:6] + 1
+vec
+```
+
+## Overview - A Gentle Intro to Tidy Statistics
+
+Overall: - Inspect data with more specific intentions - Rename/Reorganize data to make it more understandable - Create Clean, Structured Plots
+
+However: - Did not cover knowing when to use what - Used dataset we did not have access to (not hands-on)
+
+## A Gentle Intro to Tidy Statistics - Pipe Function
+
+-   "And then..."
+-   Helpful with organizing and cleaning data efficiently
+-   Creating new, more selective dataframes
+-   More functional and less cluttered
+-   Clarity & Easily Reproducible
+
+Example:
+
+small_df \<- df_cars %\>% mutate(cyl = factor(cyl)) %\>% select(mpg, cyl, disp, hp)
+
+## Tidying Data
+
+-   Really important for publications
+-   More accurate for data visualization (ggplot2)
+-   Easy for both the author and reader to understand
+-   Renaming variables + Titles
+
+Example Input:
+
+ggplot(mtcars, aes(x=hp, y=mpg)) + geom_point() + \# geom_smooth makes the line of fit geom_smooth(method="lm", se = FALSE) + labs(x = "Horsepower", y = "Miles Per Gallon (MPG)", title = "Fuel efficiency decreases as Displacement increases")
+
+## Example Output:
+
+```{r,}
+ggplot(mtcars, aes(x=hp, y=mpg)) +
+  geom_point() +
+# geom_smooth makes the line of fit
+  geom_smooth(method="lm", se = FALSE) +
+  labs(x = "Horsepower",
+       y = "Miles Per Gallon (MPG)",
+       title = "Fuel efficiency decreases as Displacement increases")
+
+```
+
+## Overview - NIH Responsible Conduct of Research Training (1/4)
+
+Why is it necessary? - Crucial for those who want to/are receiving NIH training grants - Career Development Awards - Research Education Grants - Non-Compliance causes discontinuation or no funding
+
+## Overview - NIH Responsible Conduct of Research Training (2/4)
+
+General Areas Covered by the RCR: - Data management - Research misconduct - Mentorship and collaboration - Societal impacts of research
+
+## Overview - NIH Responsible Conduct of Research Training (3/4) Goals:
+
+-   Maintain integrity in the field of science / prevent unethical conduct
+-   Increase awareness of ethical issues surrounding conduct of research and how to act responsibly
+-   Inform scientists and research trainees about regulations, policies, statutes, and guidelines
+
+## Overview - NIH Responsible Conduct of Research Training (4/4)
+
+Curriculum of RCR training:
+
+-   Research misconduct and questionable research practices
+-   Data management
+-   Scientific rigor and reproducibility
+-   Responsible authorship and publication / and peer review
+-   Harassment, bullying, and inappropriate behavior in work environments
+-   Policies regarding laboratory safety, biosafety, and human and animal research subjects
+
+## Evie Topic of Interest #1: Loops
+
+The most commonly used loop in R is the for loop.
+
+```{r,  echo = TRUE}
+for (value in c("1", "2", "3", "4")) {
+  print(value)
+}
+```
+
+While loops are used much less, but usually state while a statement is being satisfied, to continue running the code. Repeat loops simply repeat an action over and over and can use an if statement to eventually stop running the code if a certain statement was satisfied.
+
+## Evie Topic of Interest #2: Research with Human Participants
+
+-   The Clinical Research Protocol must be written, reviewed, and approved before conducting the study
+-   Clinical Center conducting research must have suitable equipment
+-   Potential benefits of the study must outweigh any risks
+-   Participants must give informed consent without inappropriate influences
+
+## Joleen Focus Topic #1 - NIH Rigor and Reproducibility
+
+-   Two most important ideas of Data Science : Repetition and Visualization
+-   Quality, credibility, and reliability
+-   Rigor:
+-   Research Design, Data Collection and Analysis
+-   Statistical Rigor
+-   Reproducibility:
+-   Transparency, Results, Validation
+-   Mentorships play a crucial role
+
+## Joleen Focus Topic #2 - Tidy Statistics with ACCORD Data
+
+-   Practice different plots with blood pressure csv
+
+## Failed Attempts (Point + Line of Fit)
+
+Showed correlation between high dbp and sbp levels, but really clumped and confusing
+
+```{r, Point}
+ggplot(bp_data, aes(x = hr, y = sbp, color = dbp))+
+  geom_point()+
+  geom_smooth(se = FALSE)
+  
+```
+
+## Line Graph
+
+Though it would be more smooth (like line of fit)
+
+```{r, line}
+ggplot(bp_data, aes(x = sbp, y = hr)) +
+  geom_line()
+```
+
+## Favorites (Density)
+
+Came out the best, but want to compare the two on same plane
+
+## Graph 1:
+
+```{r, Density sbp}
+ggplot(bp_data, aes(x = sbp))+
+  geom_density(fill = "blue")
+```
+
+## Graph 2:
+
+```{r, hr}
+ggplot(bp_data, aes(x = hr)) +
+  geom_density(fill = "orange") 
+```
+
+## Bar Graph
+
+The counts generally turn out better
+
+```{r, Bar}
+ggplot(bp_data, aes(x = sbp)) +
+  geom_bar(position = "dodge")
+```
+
+## More Practice using annual followup exam
+
+-   Generally turned out better because of the less varying results
+-   Had a better general understanding of the information
+-   More recorded data, but easier to navigate
+
+## Tidying and Choosing Variables:
+
+new_pe \<- pe_data %\>% mutate( smoked = factor(smoked, levels = c("2", "1"), labels = c("No", "Smoked")), hartfail = factor(hartfail, levels = c("2", "1"), labels = c("Normal", "Failed")), swelling = factor(swelling, levels = c("2", "1"), labels = c("Normal", "Swell")),
+
+```{r tidy}
+new_pe <- pe_data %>%
+  mutate(
+    smoked = factor(smoked,
+                    levels = c("2", "1"),
+                    labels = c("No", "Smoked")),
+    hartfail = factor(hartfail,
+                      levels = c("2", "1"),
+                      labels = c("Normal", "Failed")),
+    swelling = factor(swelling,
+                      levels = c("2", "1"),
+                      labels = c("Normal", "Swell")),
+  )
+
+```
+
+## Strange Results:
+
+```{r facet attempt}
+ggplot(new_pe,
+       aes(x = hartfail))+
+  geom_density(fill = "orange")+
+  facet_grid(smoked~swelling)
+```
+
+## Better Results:
+
+```{r point plot}
+ggplot(new_pe, 
+       aes(x = swelling, y = MNSIscor))+
+  geom_point()+
+  facet_grid(smoked~hartfail)
+```
+
+## Better Results:
+
+```{r bar}
+ggplot(new_pe,
+       aes(x = hartfail))+
+  geom_bar()+
+  facet_grid(smoked~swelling)
+```
+
+## Challenges and Questions
+
+Challenges:
+
+Evie:
+
+-   I did not plan out my time correctly at the start of the week
+
+Joleen:
+
+-   Loading data into R with absolute path = Writing error
+
+-   Discovering what terms meant in ACCORD = Definitions
+
+-   Navigating ggplot2 = CRAN & Package "Cheatsheet" on GitHub
+
+## Questions:
+
+Evie:
+
+-   How are Clinical Research Protocols written and reviewed?
+
+-   How are the potential benefits outweighing potential risks measured before conducting studies?
+
+Joleen:
+
+-   Is it possible to graph 2 sets of data onto same plane?
+
+-   How do you know which graph/variables to include in data visualization?
+
+-   Are resources like GitHub effective in encouraging Rigor And Reproducibility?
