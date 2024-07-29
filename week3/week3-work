@@ -1,0 +1,495 @@
+---
+title: "Week 3 Presentation"
+author: "Evie Shen & Joleen Vansomphone"
+format: pptx
+editor: visual
+---
+
+```{r, echo = FALSE, message = F, warning = F}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+library(palmerpenguins)
+library(ggthemes)
+library(readr)
+library(readxl)
+library(tidyverse)
+library(scales)
+
+
+datasets_folder <- "/Users/joleen/Desktop/R_Projects_Personal/datasets/"
+
+accord_key <- read_csv(paste(datasets_folder, "accord_key.csv", sep = "")) |>
+  print(width = Inf)
+
+bloodpressure <- 
+  read_csv(paste(datasets_folder, "bloodpressure.csv", sep = "")) |>
+  print(width = Inf)
+
+hba1c <- read_csv(paste(datasets_folder, "hba1c.csv", sep = "")) |>
+  print(width = Inf)
+
+```
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## Overview: Data Science for R
+
+-   Fundementals of R
+-   Data Science Workflow (from reading the file to transforming, modleing, and visualizing it)
+-   Effective Communication
+-   Shortcuts! (Very Helpful)
+-   Useful Functions & Features (Our focus)
+
+## Overview: NIH Document on ACCORD data
+
+-   What : determining if intensive glycemic control, multiple lipid management and intensive blood pressure control plays a role in prevention of cardiovascular events
+
+-   When: 2018
+
+-   Who: 10,251 patients with Type 2 Diabetes (age 40-79)
+
+-   Why: Type 2 Diabetics face a 2-4 higher change of dying due to cardiovascular diseases than non-diabetics
+
+-   Ultimately: Intensive therapy did not significantly reduce risks of cardiovascular events
+
+## Chapter 1
+
+**Categorical variables** are variables that can only take a small set of values
+
+-   Bar Graphs
+
+**Numerical variables** can take a wide range of numerical values (continuous or discrete)
+
+-   **Histograms**
+
+-   Histograms are divided into bin widths (intervals of values)
+
+-   **Density Plots**
+
+-   (less details than histograms, in respect to modes)
+
+-   **Box plots**
+
+-   contrast between categorical and numerical variables
+
+-   Whiskers extend to the most extreme non-outlier
+
+-   **Scatterplots**
+
+-   most common for relation between 2 variables
+
+-   *3+ Categorical variables are good for facet graphs facet_wrap(\~ variable)*
+
+## Chapter 1 Ex:
+
+```{r, echo = FALSE}
+new_accord <- accord_key |> 
+      mutate(
+        female = factor(female,
+                        levels = c("0", "1"),
+                        labels = c("Male", "Female"))
+      ) |> 
+      rename(gender = female)
+new_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("Other","White","Black","Hispanic"))
+  ) |> 
+  arrange(desc(raceclass))
+## extract BLR from sbp and dbp 
+
+blr_bp <- bloodpressure |> 
+  select(Visit, sbp, dbp, MaskID) |> 
+  filter(Visit == "BLR")
+
+## extract BLR from HbA1c
+
+blr_hba1c <- hba1c |> 
+  filter(Visit == "BLR")
+
+## ## merging datasets with accord_key
+
+baseline <- blr_bp |> 
+  left_join(blr_hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+```
+
+```{r, echo = TRUE}
+## distributions for dbp at baseline
+
+#histogram
+
+ggplot(baseline)+
+  geom_histogram(binwidth = 5, fill = "red", aes(x = dbp))
+# binwidth by 5 because dbp is in smaller range of mm/Hg
+
+```
+
+## Chapter 3 Data Transformation (1/2)
+
+We learned about several important functions such as: filter(), mutate(), select(), the pipe \|\>, group_by(), and summarize()
+
+```{r, echo = T, results = "hide"}
+flights |> 
+  filter(dest == "IAH") |> 
+  mutate(speed = distance / air_time * 60) |> 
+  select(year:day, dep_time, carrier, flight, speed) |> 
+  arrange(desc(speed))
+```
+
+## Chapter 3 Data Transformation (2/2)
+
+```{r,  echo = FALSE}
+flights |> 
+  filter(dest == "IAH") |> 
+  mutate(speed = distance / air_time * 60) |> 
+  select(year:day, dep_time, carrier, flight, speed) |> 
+  arrange(desc(speed))
+```
+
+## Chapter 5 (1/2)
+
+**Three rules for data tidying:**
+
+1.  Each variable is a column; each column is a variable.
+
+2.  Each observation is a row; each row is an observation.
+
+3.  Each value is a cell; each cell is a single value.
+
+**pivot_longer()**
+
+-   more common than pivot_wider
+
+-   cols specifies which columns need to be pivoted, i.e. which columns aren’t variables
+
+-   uses the same syntax as select()
+
+## Chapter 5 (2/2)
+
+Useful visual:
+
+![](RforData/datapivot.png)
+
+## Chapter 7 Data Import
+
+We learned how to read and write csv files: read_csv("file name") and write_csv(data name, "file name")
+
+```{r,  echo = T, message = FALSE, results = "hide"}
+sales_files <- c(
+  "https://pos.it/r4ds-01-sales",
+  "https://pos.it/r4ds-02-sales",
+  "https://pos.it/r4ds-03-sales"
+)
+read_csv(sales_files, id = "file")
+```
+
+## Chapter 9
+
+geom functions outside of ggplot2
+
+-   Especially useful for density graphs
+
+Ex: geom_density_ridges
+
+```{r, message = FALSE, echo = TRUE}
+library(ggridges)
+
+ggplot(mpg, aes(x = hwy, y = drv, fill = drv, color = drv)) +
+  geom_density_ridges(alpha = 0.5, show.legend = FALSE)
+```
+
+## Chapter 10 Exploratory Data Analysis (1/5)
+
+1.  Generate questions about your data
+2.  Answer the question by visualizing and modelling your data
+
+Q: How does the price of diamonds vary by carats?
+
+## Chapter 10 Exploratory Data Analysis (2/5)
+
+We first created a graph to find correlation between price and carat.
+
+```{r,  echo = T, results = "hide", fig.show = 'hide'}
+ggplot(diamonds |> filter(carat < 3), aes(x = carat, y = price)) +
+  geom_point()
+```
+
+## Chapter 10 Exploratory Data Analysis (3/5)
+
+```{r,  echo = FALSE}
+ggplot(diamonds |> filter(carat < 3), aes(x = carat, y = price)) +
+  geom_point()
+```
+
+## Chapter 10 Exploratory Data Analysis (4/5)
+
+Then, we made carat(a continuous variable) into a discrete variable using ranges and boxplots to see our data more clearly.
+
+```{r,  echo = TRUE, results = "hide", fig.show = 'hide'}
+ggplot(diamonds |> filter(carat < 3), aes(x = carat, y = price)) + 
+  geom_boxplot(aes(group = cut_width(carat, 0.1)))
+```
+
+## Chapter 10 Exploratory Data Analysis (5/5)
+
+```{r,  echo = FALSE}
+ggplot(diamonds |> filter(carat < 3), aes(x = carat, y = price)) + 
+  geom_boxplot(aes(group = cut_width(carat, 0.1)))
+```
+
+## Chapter 11 (Communication)
+
+**labs()**
+
+-   labels are the best way to turn an exploratory graphic into an expository graphic
+
+    -   lab can add labels to title, axes, subtitles, colors & more
+
+-   Data accessible to wider audiences
+
+-   Variables should be clear
+
+## Chapter 12 Logical Vectors (1/2)
+
+We can use logical vectors to catgorize data by certain conditions.
+
+```{r,  echo = T, results = "hide", message = FALSE}
+flights |> 
+  group_by(year, month, day) |> 
+  summarize(
+    proportion_delayed = mean(dep_delay <= 60, na.rm = TRUE),
+    count_long_delay = sum(arr_delay >= 300, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+## Chapter 12 Logical Vectors (2/2)
+
+```{r,  echo = FALSE}
+flights |> 
+  group_by(year, month, day) |> 
+  summarize(
+    proportion_delayed = mean(dep_delay <= 60, na.rm = TRUE),
+    count_long_delay = sum(arr_delay >= 300, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+## Chapter 13 (Numbers)
+
+**count()**
+
+-   Usually on a single line because it’s usually used at the console for a quick check that a calculation is working as expected
+
+-   If you want to see the most common values, add sort = TRUE
+
+-   Great for quick exploration and checks during analysis
+
+**n_distinct(x)**
+
+-   counts the number of distinct (unique) values of one or more variables
+
+-   Used in summarize()
+
+## Chapter 13 Exercise
+
+```{r, echo = TRUE}
+bloodpressure |> 
+  distinct(MaskID) |> 
+  count(MaskID, sort = TRUE)
+```
+
+## Chapter 14 Strings
+
+Strings are very useful when evaluating lengths or characteristics of characters.
+
+```{r,  echo = TRUE}
+x <- c("Apple", "Banana", "Pear")
+str_sub(x, 1, 3)
+```
+
+```{r,  echo = TRUE}
+str_to_upper(c("a", "b", "D"))
+```
+
+## Chapter 15
+
+**str_detect()**
+
+-   returns a logical vector that is TRUE if the pattern matches an element of the character vector and FALSE otherwise
+
+-   str_detect(c("a", "b", "c"), "\[aeiou\]") returns a logical vector of the same length as the initial vector
+
+-   pairs well with filter()
+
+## Chapter 16 Factors (1/3)
+
+```{r,  echo = T, results = "hide", fig.show = 'hide'}
+relig_summary <- gss_cat |>
+  group_by(relig) |>
+  summarize(
+    tvhours = mean(tvhours, na.rm = TRUE),
+    n = n()
+  )
+ggplot(relig_summary, aes(x = tvhours, y = relig)) + 
+  geom_point()
+```
+
+## Chapter 16 Factors (2/3)
+
+```{r,  echo = FALSE}
+relig_summary <- gss_cat |>
+  group_by(relig) |>
+  summarize(
+    tvhours = mean(tvhours, na.rm = TRUE),
+    n = n()
+  )
+ggplot(relig_summary, aes(x = tvhours, y = relig)) + 
+  geom_point()
+```
+
+## Chapter 16 Factors (3/3)
+
+```{r,  echo = TRUE}
+ggplot(relig_summary, aes(x = tvhours, y = fct_reorder(relig, tvhours))) +
+  geom_point()
+```
+
+## Chapter 17
+
+-   Time is very common when showing/visualizing relationships
+
+-   Ex: Longitudinal datasets in ACCORD include observations of the same respondent over **time**
+
+-   To get the current date or date-time you can use today() or now()
+
+    -   When:
+
+        -    reading a file with readr.
+
+        -   From a string.
+
+        -   From individual date-time components.
+
+        -   From an existing date/time object.
+
+## Chapter 18 Missing Values (1/2)
+
+Explicit vs. Implicit
+
+```{r,  echo = TRUE}
+stocks <- tibble(
+  year  = c(2020, 2020, 2020, 2020, 2021, 2021, 2021),
+  qtr   = c(   1,    2,    3,    4,    2,    3,    4),
+  price = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+```
+
+## Chapter 18 Missing Values (2/2)
+
+```{r,  echo = TRUE}
+stocks |>
+  complete(year, qtr)
+```
+
+## Chapter 19
+
+Joins: take a pair of data frames (x and y) and return a data frame. The order of the rows and columns in the output is primarily determined by x.
+
+-   Most common **mutating** join : left_join() 
+
+    -    the output will always have the same rows as x, the data frame you’re joining to. 
+
+    -    primary use of left_join() is to add in additional metadata
+
+        -   by = "x" corresponds to join_by(x).
+
+        -   by = c("a" = "x") corresponds to join_by(a == x)
+
+-   Filter joins:
+
+    -   Semi-joins keep all rows in x that have a match in y.
+
+    -   Anit-joins return all rows in x that don’t have a match in y
+
+        -   Great for missing values
+
+## Chapter 19 Example
+
+```{r, echo = FALSE}
+new_accord <- accord_key |> 
+      mutate(
+        female = factor(female,
+                        levels = c("0", "1"),
+                        labels = c("Male", "Female"))
+      ) |> 
+      rename(gender = female)
+new_accord <- new_accord |> 
+  mutate(
+    raceclass = factor(raceclass,
+                       levels = c("Other","White","Black","Hispanic"))
+  ) |> 
+  arrange(desc(raceclass))
+```
+
+```{r, echo = TRUE}
+
+## extract BLR from sbp and dbp 
+
+blr_bp <- bloodpressure |> 
+  select(Visit, sbp, dbp, MaskID) |> 
+  filter(Visit == "BLR")
+
+## extract BLR from HbA1c
+
+blr_hba1c <- hba1c |> 
+  filter(Visit == "BLR")
+
+## ## merging datasets with accord_key
+
+baseline <- blr_bp |> 
+  left_join(blr_hba1c, join_by(MaskID, Visit)) |> 
+  left_join(new_accord, join_by(MaskID)) |> 
+  arrange(MaskID) |> # arranged MaskID numerically for neatness
+  relocate(MaskID) # brought MaskID to front to show the key
+
+```
+
+## Join Results
+
+```{r}
+print(baseline)
+```
+
+## Challenges
+
+Joleen:
+
+-   Bonus exercise (was not sure what approach to take)
+
+-   Creating functions
+
+-   Overlay histograms (will figure it out)
+
+Evie:
+
+-   Inserting longer segments of code in R Quarto that fit within slides
+
+## Questions
+
+Joleen
+
+-   How do you create functions with variables?
+
+-   How do you know which variable to assign to which axis for best outcome
+
+-   How do you remove outliers?
+
+    -   And should you remove them from the dataframe as a whole, or just when plotting the data?
